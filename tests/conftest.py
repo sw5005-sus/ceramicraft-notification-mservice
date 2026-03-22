@@ -18,59 +18,84 @@ from ceramicraft_notification_mservice.service import NotificationService
 
 @pytest.fixture(scope="session")
 def event_loop():
-    """Redefine event_loop fixture to have session scope."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
+    """Session-scoped event loop for all async fixtures."""
+    policy = asyncio.get_event_loop_policy()
+    loop = policy.new_event_loop()
     yield loop
     loop.close()
 
 
 @pytest.fixture(scope="session")
-async def db_engine():
-    """Fixture for a test database engine using testcontainers."""
+def pg_container():
+    """Start a postgres testcontainer for the whole session."""
     with PostgresContainer("postgres:16-alpine") as pg:
-        # Correct the URL format for asyncpg
-        conn_url = pg.get_connection_url().replace(
-            "postgresql+psycopg2://", "postgresql+asyncpg://"
-        )
-        engine = create_async_engine(conn_url)
+        yield pg
+
+
+@pytest.fixture(scope="session")
+def db_url(pg_container):
+    """Return asyncpg-compatible DB URL."""
+    return pg_container.get_connection_url().replace(
+        "postgresql+psycopg2://", "postgresql+asyncpg://"
+    )
+
+
+@pytest.fixture(scope="session")
+def db_engine(event_loop, db_url):
+    """Session-scoped async engine with schema created."""
+
+    async def _create():
+        engine = create_async_engine(db_url)
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-        yield engine
-        await engine.dispose()
+        return engine
+
+    engine = event_loop.run_until_complete(_create())
+    yield engine
+    event_loop.run_until_complete(engine.dispose())
 
 
 @pytest.fixture(scope="session")
 def session_factory(db_engine):
-    """Fixture for a session factory."""
+    """Session-scoped async session factory."""
     return async_sessionmaker(db_engine, class_=AsyncSession, expire_on_commit=False)
 
 
 @pytest.fixture(autouse=True)
-async def clear_db(db_engine):
-    """Fixture to clear the database before each test."""
+def clear_db(event_loop, db_engine):
+    """Truncate device_tokens before each test."""
     yield
-    async with db_engine.begin() as conn:
-        await conn.execute(text("TRUNCATE TABLE device_tokens RESTART IDENTITY"))
+
+    async def _truncate():
+        async with db_engine.begin() as conn:
+            await conn.execute(text("TRUNCATE TABLE device_tokens RESTART IDENTITY"))
+
+    event_loop.run_until_complete(_truncate())
 
 
 @pytest.fixture
 def svc(session_factory):
-    """Fixture for the NotificationService gRPC servicer."""
+    """gRPC servicer fixture."""
     return NotificationService(session_factory=session_factory)
 
 
 @pytest.fixture
 def ctx():
-    """Fixture for a mock gRPC ServicerContext."""
+    """Mock gRPC ServicerContext."""
     mock_context = MagicMock()
     mock_context.abort = AsyncMock()
     return mock_context
 
 
 @pytest.fixture
-async def http_client(session_factory):
-    """Fixture for an async HTTP client for testing the FastAPI app."""
+def http_client(event_loop, session_factory):
+    """Async HTTP client for FastAPI testing."""
     app = create_app(session_factory)
     transport = ASGITransport(app=app)  # type: ignore[arg-type]
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        yield client
+
+    async def _make_client():
+        return AsyncClient(transport=transport, base_url="http://test")
+
+    client = event_loop.run_until_complete(_make_client())
+    yield client
+    event_loop.run_until_complete(client.aclose())
