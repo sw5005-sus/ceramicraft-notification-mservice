@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from sqlalchemy.pool import NullPool
 from testcontainers.postgres import PostgresContainer
 
 from ceramicraft_notification_mservice.http.router import create_app
@@ -28,7 +29,7 @@ async def db_engine(pg_container):
     url = pg_container.get_connection_url().replace(
         "postgresql+psycopg2://", "postgresql+asyncpg://"
     )
-    engine = create_async_engine(url)
+    engine = create_async_engine(url, poolclass=NullPool)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield engine
