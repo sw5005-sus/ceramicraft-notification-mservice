@@ -34,6 +34,7 @@ dev = [
     "grpcio-tools>=1.64.1",
     "ty>=0.0.22",
 ]
+
 [tool.ruff]
 exclude = ["src/ceramicraft_notification_mservice/pb/"]
 
