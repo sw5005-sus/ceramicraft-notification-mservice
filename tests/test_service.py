@@ -101,10 +101,13 @@ async def test_encrypted_payload_format(svc, session_factory, ctx):
         await svc.SendUserPush(request, ctx)
 
     mock_send.assert_called_once()
-    args, _ = mock_send.call_args
-    sent_fcm_token, encrypted_payload_b64 = args
+    kwargs = mock_send.call_args.kwargs
 
-    assert sent_fcm_token == device.fcm_token
+    assert kwargs["fcm_token"] == device.fcm_token
+    assert kwargs["title"] == "Enc"
+    assert kwargs["extra_data"] == {"extra": "info"}
+
+    encrypted_payload_b64 = kwargs["encrypted_body"]
 
     # Verify it's valid Base64
     try:

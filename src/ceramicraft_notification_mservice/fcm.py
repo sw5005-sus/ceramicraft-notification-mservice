@@ -11,6 +11,9 @@ logger = logging.getLogger(__name__)
 
 _firebase_app: Optional[firebase_admin.App] = None
 
+# Generic placeholder shown in system tray — never put real content here
+_NOTIFICATION_BODY_PLACEHOLDER = "您有一条新的安全业务消息，请点击查看详情。"
+
 
 def initialize_firebase(cred_env: str) -> None:
     """
@@ -19,7 +22,7 @@ def initialize_firebase(cred_env: str) -> None:
     It can be initialized either from a JSON string or a file path
     provided in the `FIREBASE_CREDENTIALS_JSON` environment variable.
 
-    This function is idempotent and will not re-initialize if already done.
+    This function is idempotent and will not re-initialized if already done.
     """
     global _firebase_app
     if _firebase_app:
@@ -47,13 +50,27 @@ def initialize_firebase(cred_env: str) -> None:
     logger.info("Firebase Admin SDK initialized successfully.")
 
 
-async def send_push(fcm_token: str, encrypted_payload: str) -> bool:
+async def send_push(
+    fcm_token: str,
+    title: str,
+    encrypted_body: str,
+    extra_data: dict[str, str] | None = None,
+) -> bool:
     """
-    Sends an encrypted payload to a device using FCM.
+    Sends a push notification to a device using FCM.
+
+    The notification block carries a plaintext title and a generic body
+    placeholder (so the OS can display a tray notification without exposing
+    sensitive content). The real body ciphertext is delivered in the data
+    block under the key ``encrypted_payload``, alongside any caller-supplied
+    extra fields.
 
     Args:
-        fcm_token: The Firebase Cloud Messaging token for the target device.
-        encrypted_payload: The Base64 encoded encrypted payload.
+        fcm_token: The Firebase Cloud Messaging registration token.
+        title: Plaintext notification title shown in the system tray.
+        encrypted_body: Base64-encoded AES-GCM ciphertext of the message body.
+        extra_data: Optional extra key/value pairs forwarded to the app
+                    (e.g. ``action_type``, ``order_id``).
 
     Returns:
         True if the message was sent successfully, False otherwise.
@@ -62,14 +79,21 @@ async def send_push(fcm_token: str, encrypted_payload: str) -> bool:
         logger.warning("Firebase not initialized. Cannot send push notification.")
         return False
 
+    data: dict[str, str] = {"encrypted_payload": encrypted_body}
+    if extra_data:
+        data.update(extra_data)
+
     message = messaging.Message(
-        data={"enc": encrypted_payload},
+        notification=messaging.Notification(
+            title=title,
+            body=_NOTIFICATION_BODY_PLACEHOLDER,
+        ),
+        data=data,
         token=fcm_token,
         android=messaging.AndroidConfig(priority="high"),
     )
 
     try:
-        # messaging.send is a blocking call, so we run it in a thread
         await asyncio.to_thread(messaging.send, message)
         logger.debug(f"Successfully sent push to token: {fcm_token[:10]}...")
         return True

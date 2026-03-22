@@ -1,5 +1,4 @@
 import asyncio
-import json
 import logging
 
 import grpc
@@ -34,24 +33,23 @@ class NotificationService(notification_pb2_grpc.NotificationServiceServicer):
                         success=True, sent_count=0
                     )
 
-                payload_dict = {
-                    "title": request.title,
-                    "body": request.body,
-                    "data": dict(request.data),
-                }
-                payload_json = json.dumps(payload_dict)
+                # Extra caller-supplied metadata forwarded to the app as-is.
+                extra_data: dict[str, str] = dict(request.data)
 
-                async def _send_and_track(device: DeviceToken):
-                    encrypted_payload = crypto.encrypt_payload(
-                        device.aes_key, payload_json
+                async def _send_and_track(device: DeviceToken) -> str | None:
+                    enc_body = crypto.encrypt_payload(device.aes_key, request.body)
+                    success = await fcm.send_push(
+                        fcm_token=device.fcm_token,
+                        title=request.title,
+                        encrypted_body=enc_body,
+                        extra_data=extra_data or None,
                     )
-                    success = await fcm.send_push(device.fcm_token, encrypted_payload)
                     return device.fcm_token if not success else None
 
                 tasks = [_send_and_track(device) for device in devices]
                 results = await asyncio.gather(*tasks)
 
-                failed_tokens = [token for token in results if token is not None]
+                failed_tokens = [t for t in results if t is not None]
                 sent_count = len(devices) - len(failed_tokens)
 
                 return notification_pb2.SendUserPushResponse(
