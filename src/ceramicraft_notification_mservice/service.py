@@ -13,7 +13,10 @@ logger = logging.getLogger(__name__)
 
 
 class NotificationService(notification_pb2_grpc.NotificationServiceServicer):
-    def __init__(self, session_factory: async_sessionmaker[AsyncSession]):
+    def __init__(
+        self,
+        session_factory: async_sessionmaker[AsyncSession],
+    ) -> None:
         self._session_factory = session_factory
 
     async def SendUserPush(

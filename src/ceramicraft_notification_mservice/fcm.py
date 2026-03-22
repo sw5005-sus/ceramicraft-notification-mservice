@@ -15,7 +15,9 @@ _firebase_app: Optional[firebase_admin.App] = None
 _NOTIFICATION_BODY_PLACEHOLDER = "You have a new secure message. Tap to view details."
 
 
-def initialize_firebase(cred_env: str) -> None:
+def initialize_firebase(
+    cred_env: str,
+) -> None:
     """
     Initializes the Firebase Admin SDK.
 

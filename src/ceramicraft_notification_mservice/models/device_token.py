@@ -46,7 +46,9 @@ class DeviceToken(Base):
         server_default=func.now(), onupdate=func.now()
     )
 
-    def __repr__(self) -> str:
+    def __repr__(
+        self,
+    ) -> str:
         return (
             f"<DeviceToken(id={self.id}, user_id={self.user_id}, "
             f"device_id='{self.device_id}')>"

@@ -67,7 +67,9 @@ def create_router(
     return router
 
 
-def create_app(session_factory: async_sessionmaker[AsyncSession]) -> FastAPI:
+def create_app(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> FastAPI:
     """Creates and returns the FastAPI application."""
     http_app = FastAPI()
     http_app.include_router(create_router(session_factory))

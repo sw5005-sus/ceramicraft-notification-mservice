@@ -23,7 +23,9 @@ class Settings(BaseSettings):
     FIREBASE_CREDENTIALS_JSON: str = Field(default="")
 
     @property
-    def DATABASE_URL(self) -> str:
+    def DATABASE_URL(
+        self,
+    ) -> str:
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.NOTIFICATION_DB_NAME}"
 
 

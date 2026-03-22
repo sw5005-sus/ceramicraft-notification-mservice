@@ -9,22 +9,31 @@ def generate_aes_key() -> bytes:
     return os.urandom(32)
 
 
-def key_to_hex(key: bytes) -> str:
+def key_to_hex(
+    key: bytes,
+) -> str:
     """Converts a bytes key to its hexadecimal string representation."""
     return key.hex()
 
 
-def hex_to_key(hex_str: str) -> bytes:
+def hex_to_key(
+    hex_str: str,
+) -> bytes:
     """Converts a hexadecimal string back to a bytes key."""
     return bytes.fromhex(hex_str)
 
 
-def key_to_base64(key: bytes) -> str:
+def key_to_base64(
+    key: bytes,
+) -> str:
     """Encodes a bytes key into a Base64 string for API responses."""
     return base64.b64encode(key).decode("utf-8")
 
 
-def encrypt_payload(key_hex: str, payload: str) -> str:
+def encrypt_payload(
+    key_hex: str,
+    payload: str,
+) -> str:
     """
     Encrypts a payload using AES-256-GCM.
 
