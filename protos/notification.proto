@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package ceramicraft.notification;
+
+message SendUserPushRequest {
+    int64 user_id = 1;
+    string title = 2;
+    string body = 3;
+    map<string, string> data = 4;
+}
+
+message SendUserPushResponse {
+    bool success = 1;
+    int32 sent_count = 2;
+    repeated string failed_tokens = 3;
+}
+
+service NotificationService {
+    rpc SendUserPush (SendUserPushRequest) returns (SendUserPushResponse);
+}
