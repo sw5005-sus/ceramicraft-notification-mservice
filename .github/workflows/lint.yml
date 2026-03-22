@@ -22,7 +22,7 @@ jobs:
         run: uv sync --dev
 
       - name: Run ruff check
-        run: uv run ruff check . --exclude src/ceramicraft_notification_mservice/pb
+        run: uv run ruff check .
 
   ruff-format:
     runs-on: ubuntu-latest
@@ -38,7 +38,7 @@ jobs:
         run: uv sync --dev
 
       - name: Check code formatting
-        run: uv run ruff format --check . --exclude src/ceramicraft_notification_mservice/pb
+        run: uv run ruff format --check .
 
   type-check:
     runs-on: ubuntu-latest
