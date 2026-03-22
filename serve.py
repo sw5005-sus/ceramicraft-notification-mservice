@@ -89,7 +89,10 @@ async def _start_async() -> None:
         log_level="info",
     )
     server = uvicorn.Server(config)
-    await asyncio.gather(server.serve(), grpc_server.wait_for_termination())
+    try:
+        await asyncio.gather(server.serve(), grpc_server.wait_for_termination())
+    finally:
+        await grpc_server.stop(grace=5)
 
 
 if __name__ == "__main__":
