@@ -35,12 +35,12 @@ dev = [
     "ty>=0.0.22",
 ]
 [tool.ruff]
-exclude = ["src/ceramicraft_notification_mservice/pb"]
+exclude = ["src/ceramicraft_notification_mservice/pb/"]
+
+[tool.ty.src]
+exclude = ["src/ceramicraft_notification_mservice/pb/"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
-
-[tool.ty.src]
-exclude = ["src/ceramicraft_notification_mservice/pb/**"]
