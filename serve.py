@@ -26,6 +26,25 @@ app = typer.Typer(help="CeramiCraft Notification Microservice CLI")
 
 
 @app.command()
+def reset_db() -> None:
+    """Reset the database schema (drop all tables and recreate)."""
+    asyncio.run(_reset_db_async())
+
+
+async def _reset_db_async() -> None:
+    settings = get_settings()
+    engine = create_async_engine(settings.DATABASE_URL)
+    typer.echo("Dropping existing tables...")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+    typer.echo("Creating tables...")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    await engine.dispose()
+    typer.secho("Database reset successfully.", fg=typer.colors.GREEN)
+
+
+@app.command()
 def start() -> None:
     """Start the HTTP and gRPC servers."""
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
