@@ -25,12 +25,6 @@ dotenv.load_dotenv()
 app = typer.Typer(help="CeramiCraft Notification Microservice CLI")
 
 
-@app.command()
-def reset_db() -> None:
-    """Reset the database schema (drop all tables and recreate)."""
-    asyncio.run(_reset_db_async())
-
-
 async def _reset_db_async() -> None:
     settings = get_settings()
     engine = create_async_engine(settings.DATABASE_URL)
@@ -42,13 +36,6 @@ async def _reset_db_async() -> None:
         await conn.run_sync(Base.metadata.create_all)
     await engine.dispose()
     typer.secho("Database reset successfully.", fg=typer.colors.GREEN)
-
-
-@app.command()
-def start() -> None:
-    """Start the HTTP and gRPC servers."""
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
-    asyncio.run(_start_async())
 
 
 async def _start_async() -> None:
@@ -95,6 +82,19 @@ async def _start_async() -> None:
             tg.create_task(grpc_server.wait_for_termination())
     finally:
         await grpc_server.stop(grace=5)
+
+
+@app.command()
+def reset_db() -> None:
+    """Reset the database schema (drop all tables and recreate)."""
+    asyncio.run(_reset_db_async())
+
+
+@app.command()
+def start() -> None:
+    """Start the HTTP and gRPC servers."""
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+    asyncio.run(_start_async())
 
 
 if __name__ == "__main__":
