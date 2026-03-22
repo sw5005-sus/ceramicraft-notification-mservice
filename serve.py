@@ -1,111 +1,77 @@
 import asyncio
 import logging
+import sys
 
+import dotenv
+import dttb
 import grpc
 import typer
-import uvicorn
-from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+import ceramicraft_notification_mservice.fcm as fcm_module
 from ceramicraft_notification_mservice.config import get_settings
-from ceramicraft_notification_mservice.fcm import initialize_firebase
 from ceramicraft_notification_mservice.http.router import create_app
 from ceramicraft_notification_mservice.models.device_token import Base
 from ceramicraft_notification_mservice.pb import notification_pb2_grpc
 from ceramicraft_notification_mservice.service import NotificationService
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Apply dttb tracebacks for timestamps on exceptions
+dttb.apply()
 
-app = typer.Typer()
-settings = get_settings()
+# Load environment variables
+dotenv.load_dotenv()
 
-
-async def _start_all(
-    http_app: FastAPI,
-    grpc_server: grpc.aio.Server,
-    http_host: str,
-    http_port: int,
-) -> None:
-    """Starts both the HTTP and gRPC servers."""
-    uvicorn_config = uvicorn.Config(
-        http_app, host=http_host, port=http_port, log_level="info"
-    )
-    uvicorn_server = uvicorn.Server(uvicorn_config)
-
-    logger.info(
-        "Starting gRPC server on "
-        f"{settings.NOTIFICATION_GRPC_HOST}:{settings.NOTIFICATION_GRPC_PORT}"
-    )
-    await grpc_server.start()
-
-    logger.info(f"Starting HTTP server on {http_host}:{http_port}")
-    await asyncio.gather(uvicorn_server.serve(), grpc_server.wait_for_termination())
+app = typer.Typer(help="CeramiCraft Notification Microservice CLI")
 
 
 @app.command()
-def start(
-    http_host: str = typer.Option(
-        settings.NOTIFICATION_HTTP_HOST,
-        "--http-host",
-        "-h",
-        help="HTTP server host",
-    ),
-    http_port: int = typer.Option(
-        settings.NOTIFICATION_HTTP_PORT,
-        "--http-port",
-        "-p",
-        help="HTTP server port",
-    ),
-) -> None:
-    """Starts the notification microservice (HTTP and gRPC servers)."""
-    import os
+def start() -> None:
+    """Start the HTTP and gRPC servers."""
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+    asyncio.run(_start_async())
 
-    cred = os.getenv("FIREBASE_CREDENTIALS_JSON", "")
-    if cred:
-        initialize_firebase(cred)
-    else:
-        logger.warning("FIREBASE_CREDENTIALS_JSON not set - FCM push will not work")
+
+async def _start_async() -> None:
+    import uvicorn
+
+    settings = get_settings()
 
     engine = create_async_engine(settings.DATABASE_URL)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
-    async def init_db() -> None:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+    # Initialise DB schema
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
-    asyncio.run(init_db())
+    # Initialise Firebase
+    fcm_module.initialize_firebase(settings.FIREBASE_CREDENTIALS_JSON)
 
-    grpc_server = grpc.aio.server()
-    service_impl = NotificationService(session_factory)
-    notification_pb2_grpc.add_NotificationServiceServicer_to_server(
-        service_impl, grpc_server
-    )
-    grpc_server.add_insecure_port(
-        f"{settings.NOTIFICATION_GRPC_HOST}:{settings.NOTIFICATION_GRPC_PORT}"
-    )
-
+    # Build FastAPI app
     http_app = create_app(session_factory)
 
-    try:
-        asyncio.run(_start_all(http_app, grpc_server, http_host, http_port))
-    except (KeyboardInterrupt, SystemExit):
-        logger.info("Servers shutting down.")
+    # Build gRPC server
+    grpc_server = grpc.aio.server()
+    notification_pb2_grpc.add_NotificationServiceServicer_to_server(
+        NotificationService(session_factory=session_factory), grpc_server
+    )
+    grpc_host = settings.NOTIFICATION_GRPC_HOST
+    grpc_address = f"{grpc_host}:{settings.NOTIFICATION_GRPC_PORT}"
+    grpc_server.add_insecure_port(grpc_address)
+    await grpc_server.start()
+    typer.secho(f"gRPC server listening on {grpc_address}", fg=typer.colors.CYAN)
 
-
-@app.command()
-def reset_db() -> None:
-    """Drops and recreates all database tables."""
-
-    async def _reset() -> None:
-        engine = create_async_engine(settings.DATABASE_URL)
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.drop_all)
-            await conn.run_sync(Base.metadata.create_all)
-        await engine.dispose()
-        print("Database has been reset.")
-
-    asyncio.run(_reset())
+    # Run HTTP server
+    http_host = settings.NOTIFICATION_HTTP_HOST
+    http_address = f"{http_host}:{settings.NOTIFICATION_HTTP_PORT}"
+    typer.secho(f"HTTP server listening on {http_address}", fg=typer.colors.CYAN)
+    config = uvicorn.Config(
+        http_app,
+        host=settings.NOTIFICATION_HTTP_HOST,
+        port=settings.NOTIFICATION_HTTP_PORT,
+        log_level="info",
+    )
+    server = uvicorn.Server(config)
+    await asyncio.gather(server.serve(), grpc_server.wait_for_termination())
 
 
 if __name__ == "__main__":

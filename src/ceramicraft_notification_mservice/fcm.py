@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 _firebase_app: Optional[firebase_admin.App] = None
 
 # Generic placeholder shown in system tray — never put real content here
-_NOTIFICATION_BODY_PLACEHOLDER = "您有一条新的安全业务消息，请点击查看详情。"
+_NOTIFICATION_BODY_PLACEHOLDER = "You have a new secure message. Tap to view details."
 
 
 def initialize_firebase(cred_env: str) -> None:
