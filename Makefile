@@ -1,4 +1,4 @@
-.PHONY: gen
+.PHONY: gen setup test
 
 gen:
 	@if ! command -v buf > /dev/null; then \
@@ -15,14 +15,8 @@ gen:
 	perl -pi -e 's/^import (.*_pb2.*)/from . import $$1/' src/ceramicraft_notification_mservice/pb/notification_pb2_grpc.py
 	touch src/ceramicraft_notification_mservice/pb/__init__.py
 
-.PHONY: setup
 setup:
 	uv sync --dev
 
-.PHONY: test
 test:
 	uv run pytest -v
-
-.PHONY: run
-run:
-	uv run serve start
