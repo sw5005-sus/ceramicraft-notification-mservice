@@ -46,8 +46,12 @@ class NotificationService(notification_pb2_grpc.NotificationServiceServicer):
                     )
                     return device.fcm_token if not success else None
 
-                tasks = [_send_and_track(device) for device in devices]
-                results = await asyncio.gather(*tasks)
+                task_objects = []
+                async with asyncio.TaskGroup() as tg:
+                    for device in devices:
+                        task_objects.append(tg.create_task(_send_and_track(device)))
+
+                results = [t.result() for t in task_objects]
 
                 failed_tokens = [t for t in results if t is not None]
                 sent_count = len(devices) - len(failed_tokens)
