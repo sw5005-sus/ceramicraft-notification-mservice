@@ -90,7 +90,9 @@ async def _start_async() -> None:
     )
     server = uvicorn.Server(config)
     try:
-        await asyncio.gather(server.serve(), grpc_server.wait_for_termination())
+        async with asyncio.TaskGroup() as tg:
+            tg.create_task(server.serve())
+            tg.create_task(grpc_server.wait_for_termination())
     finally:
         await grpc_server.stop(grace=5)
 
