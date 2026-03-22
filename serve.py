@@ -6,6 +6,7 @@ import dotenv
 import dttb
 import grpc
 import typer
+import uvicorn
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 import ceramicraft_notification_mservice.fcm as fcm_module
@@ -32,8 +33,6 @@ def start() -> None:
 
 
 async def _start_async() -> None:
-    import uvicorn
-
     settings = get_settings()
 
     engine = create_async_engine(settings.DATABASE_URL)
