@@ -2,8 +2,8 @@ from typing import AsyncGenerator
 
 from fastapi import APIRouter, Depends, FastAPI, status
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from .. import crypto
 from ..models.device_token import DeviceToken
@@ -62,9 +62,7 @@ def create_router(
         await session.execute(on_conflict_stmt)
         await session.commit()
 
-        return RegisterPushTokenResponse(
-            aes_key=crypto.key_to_base64(new_key_bytes)
-        )
+        return RegisterPushTokenResponse(aes_key=crypto.key_to_base64(new_key_bytes))
 
     return router
 

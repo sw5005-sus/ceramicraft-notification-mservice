@@ -27,8 +27,7 @@ def initialize_firebase(cred_env: str) -> None:
 
     if not cred_env:
         logger.warning(
-            "FIREBASE_CREDENTIALS_JSON is not set. "
-            "FCM functionality will be disabled."
+            "FIREBASE_CREDENTIALS_JSON is not set. FCM functionality will be disabled."
         )
         return
 
@@ -75,8 +74,12 @@ async def send_push(fcm_token: str, encrypted_payload: str) -> bool:
         logger.debug(f"Successfully sent push to token: {fcm_token[:10]}...")
         return True
     except messaging.UnregisteredError:
-        logger.info(f"FCM token {fcm_token[:10]}... is unregistered. Marking as failed.")
+        logger.info(
+            f"FCM token {fcm_token[:10]}... is unregistered. Marking as failed."
+        )
         return False
     except Exception:
-        logger.exception(f"Failed to send push notification to token: {fcm_token[:10]}...")
+        logger.exception(
+            f"Failed to send push notification to token: {fcm_token[:10]}..."
+        )
         return False

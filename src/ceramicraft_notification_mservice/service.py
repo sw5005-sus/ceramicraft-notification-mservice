@@ -24,9 +24,7 @@ class NotificationService(notification_pb2_grpc.NotificationServiceServicer):
     ) -> notification_pb2.SendUserPushResponse:
         try:
             async with self._session_factory() as session:
-                stmt = select(DeviceToken).where(
-                    DeviceToken.user_id == request.user_id
-                )
+                stmt = select(DeviceToken).where(DeviceToken.user_id == request.user_id)
                 result = await session.execute(stmt)
                 devices = result.scalars().all()
 
@@ -47,9 +45,7 @@ class NotificationService(notification_pb2_grpc.NotificationServiceServicer):
                     encrypted_payload = crypto.encrypt_payload(
                         device.aes_key, payload_json
                     )
-                    success = await fcm.send_push(
-                        device.fcm_token, encrypted_payload
-                    )
+                    success = await fcm.send_push(device.fcm_token, encrypted_payload)
                     return device.fcm_token if not success else None
 
                 tasks = [_send_and_track(device) for device in devices]
@@ -65,10 +61,6 @@ class NotificationService(notification_pb2_grpc.NotificationServiceServicer):
                 )
 
         except Exception as e:
-            logger.exception(
-                f"gRPC SendUserPush failed for user_id: {request.user_id}"
-            )
-            await context.abort(
-                grpc.StatusCode.INTERNAL, f"Internal server error: {e}"
-            )
+            logger.exception(f"gRPC SendUserPush failed for user_id: {request.user_id}")
+            await context.abort(grpc.StatusCode.INTERNAL, f"Internal server error: {e}")
             return notification_pb2.SendUserPushResponse(success=False)

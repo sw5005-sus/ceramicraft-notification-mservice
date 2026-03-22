@@ -90,7 +90,9 @@ async def test_register_same_device_gets_new_key(http_client, session_factory):
         assert device.fcm_token == "token2"
 
 
-async def test_register_different_devices_same_user(http_client, session_factory: async_sessionmaker[AsyncSession]):
+async def test_register_different_devices_same_user(
+    http_client, session_factory: async_sessionmaker[AsyncSession]
+):
     """Test that two different devices for the same user are stored correctly."""
     user_id = 789
     device_id1 = str(uuid.uuid4())

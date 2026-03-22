@@ -33,7 +33,10 @@ async def _start_all(
     )
     uvicorn_server = uvicorn.Server(uvicorn_config)
 
-    logger.info(f"Starting gRPC server on {settings.NOTIFICATION_GRPC_HOST}:{settings.NOTIFICATION_GRPC_PORT}")
+    logger.info(
+        "Starting gRPC server on "
+        f"{settings.NOTIFICATION_GRPC_HOST}:{settings.NOTIFICATION_GRPC_PORT}"
+    )
     await grpc_server.start()
 
     logger.info(f"Starting HTTP server on {http_host}:{http_port}")

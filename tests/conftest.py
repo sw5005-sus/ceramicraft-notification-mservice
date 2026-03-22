@@ -1,8 +1,8 @@
 import asyncio
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from testcontainers.postgres import PostgresContainer
 
-from ceramicraft_notification_mservice.http.router import create_app, create_router
+from ceramicraft_notification_mservice.http.router import create_app
 from ceramicraft_notification_mservice.models.device_token import Base
 from ceramicraft_notification_mservice.service import NotificationService
 
@@ -71,5 +71,6 @@ def ctx():
 async def http_client(session_factory):
     """Fixture for an async HTTP client for testing the FastAPI app."""
     app = create_app(session_factory)
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    transport = ASGITransport(app=app)  # type: ignore[arg-type]
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         yield client

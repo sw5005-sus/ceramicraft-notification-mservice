@@ -34,9 +34,7 @@ class Base(DeclarativeBase):
 
 class DeviceToken(Base):
     __tablename__ = "device_tokens"
-    __table_args__ = (
-        UniqueConstraint("user_id", "device_id", name="uq_user_device"),
-    )
+    __table_args__ = (UniqueConstraint("user_id", "device_id", name="uq_user_device"),)
 
     id: Mapped[pk_guid]
     user_id: Mapped[int] = mapped_column(BigInteger, nullable=False, index=True)
@@ -49,4 +47,7 @@ class DeviceToken(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<DeviceToken(id={self.id}, user_id={self.user_id}, device_id='{self.device_id}')>"
+        return (
+            f"<DeviceToken(id={self.id}, user_id={self.user_id}, "
+            f"device_id='{self.device_id}')>"
+        )
