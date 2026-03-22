@@ -39,12 +39,7 @@ dev = [
 serve = "ceramicraft_notification_mservice.serve:app"
 
 [tool.ruff]
-line-length = 88
-target-version = "py312"
-exclude = ["src/ceramicraft_notification_mservice/pb/**"]
-
-[tool.ruff.lint]
-select = ["E", "F", "I"]
+exclude = ["src/ceramicraft_notification_mservice/pb"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
