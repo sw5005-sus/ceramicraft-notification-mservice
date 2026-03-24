@@ -76,28 +76,31 @@ def create_app(
     session_factory: async_sessionmaker[AsyncSession],
 ) -> FastAPI:
     """Creates and returns the FastAPI application."""
-    PREFIX = "/notification-ms/v1"
-    STATIC_PATH = f"{PREFIX}/static"
-
     http_app = FastAPI(
         docs_url=None,  # disable default, we serve our own
         redoc_url=None,
-        openapi_url=f"{PREFIX}/openapi.json",
+        openapi_url="/notification-ms/v1/openapi.json",
     )
-    http_app.mount(STATIC_PATH, StaticFiles(directory=str(_STATIC_DIR)), name="static")
+    http_app.mount(
+        "/notification-ms/v1/static",
+        StaticFiles(directory=str(_STATIC_DIR)),
+        name="static",
+    )
     http_app.include_router(create_router(session_factory))
 
     @http_app.get(
-        f"{PREFIX}/docs", response_class=HTMLResponse, include_in_schema=False
+        "/notification-ms/v1/docs",
+        response_class=HTMLResponse,
+        include_in_schema=False,
     )
     async def custom_swagger_ui() -> str:
-        return f"""<!DOCTYPE html>
+        return """<!DOCTYPE html>
 <html><head>
-<link rel="stylesheet" href="{STATIC_PATH}/swagger-ui.css">
+<link rel="stylesheet" href="/notification-ms/v1/static/swagger-ui.css">
 </head><body>
 <div id="swagger-ui"></div>
-<script src="{STATIC_PATH}/swagger-ui-bundle.js"></script>
-<script>SwaggerUIBundle({{url:"{PREFIX}/openapi.json",dom_id:"#swagger-ui"}})</script>
+<script src="/notification-ms/v1/static/swagger-ui-bundle.js"></script>
+<script>SwaggerUIBundle({url:"/notification-ms/v1/openapi.json",dom_id:"#swagger-ui"})</script>
 </body></html>"""
 
     return http_app
