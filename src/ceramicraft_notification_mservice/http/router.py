@@ -100,7 +100,7 @@ def create_app(
 </head><body>
 <div id="swagger-ui"></div>
 <script src="/notification-ms/v1/static/swagger-ui-bundle.js"></script>
-<script>SwaggerUIBundle({url:"/notification-ms/v1/openapi.json",dom_id:"#swagger-ui"})</script>
+<script src="/notification-ms/v1/static/swagger-init.js"></script>
 </body></html>"""
 
     return http_app
