@@ -71,6 +71,10 @@ def create_app(
     session_factory: async_sessionmaker[AsyncSession],
 ) -> FastAPI:
     """Creates and returns the FastAPI application."""
-    http_app = FastAPI()
+    http_app = FastAPI(
+        docs_url="/notification-ms/v1/docs",
+        redoc_url="/notification-ms/v1/redoc",
+        openapi_url="/notification-ms/v1/openapi.json",
+    )
     http_app.include_router(create_router(session_factory))
     return http_app
