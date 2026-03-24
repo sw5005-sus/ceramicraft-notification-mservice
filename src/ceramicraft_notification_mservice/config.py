@@ -15,10 +15,10 @@ class Settings(BaseSettings):
     POSTGRES_PORT: int = Field(default=5432)
     NOTIFICATION_DB_NAME: str = "notification_db"
 
-    NOTIFICATION_HTTP_HOST: str = "0.0.0.0"
-    NOTIFICATION_HTTP_PORT: int = 8080
-    NOTIFICATION_GRPC_HOST: str = "[::]"
-    NOTIFICATION_GRPC_PORT: int = 50051
+    NOTIFICATION_MSERVICE_HTTP_HOST: str = "0.0.0.0"
+    NOTIFICATION_MSERVICE_HTTP_PORT: int = 8080
+    NOTIFICATION_MSERVICE_GRPC_HOST: str = "[::]"
+    NOTIFICATION_MSERVICE_GRPC_PORT: int = 50051
 
     FIREBASE_CREDENTIALS_JSON: str = Field(default="")
 

@@ -55,20 +55,20 @@ async def _start() -> None:
     notification_pb2_grpc.add_NotificationServiceServicer_to_server(
         NotificationService(session_factory=session_factory), grpc_server
     )
-    grpc_host = settings.NOTIFICATION_GRPC_HOST
-    grpc_address = f"{grpc_host}:{settings.NOTIFICATION_GRPC_PORT}"
+    grpc_host = settings.NOTIFICATION_MSERVICE_GRPC_HOST
+    grpc_address = f"{grpc_host}:{settings.NOTIFICATION_MSERVICE_GRPC_PORT}"
     grpc_server.add_insecure_port(grpc_address)
     await grpc_server.start()
     typer.secho(f"gRPC server listening on {grpc_address}", fg=typer.colors.CYAN)
 
     # Run HTTP server
-    http_host = settings.NOTIFICATION_HTTP_HOST
-    http_address = f"{http_host}:{settings.NOTIFICATION_HTTP_PORT}"
+    http_host = settings.NOTIFICATION_MSERVICE_HTTP_HOST
+    http_address = f"{http_host}:{settings.NOTIFICATION_MSERVICE_HTTP_PORT}"
     typer.secho(f"HTTP server listening on {http_address}", fg=typer.colors.CYAN)
     config = uvicorn.Config(
         http_app,
-        host=settings.NOTIFICATION_HTTP_HOST,
-        port=settings.NOTIFICATION_HTTP_PORT,
+        host=settings.NOTIFICATION_MSERVICE_HTTP_HOST,
+        port=settings.NOTIFICATION_MSERVICE_HTTP_PORT,
         log_level="info",
     )
     server = uvicorn.Server(config)
