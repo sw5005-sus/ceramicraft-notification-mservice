@@ -44,14 +44,10 @@ async def _start() -> None:
     engine = create_async_engine(settings.DATABASE_URL)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
-    # Initialise DB schema
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
     # Initialise Firebase
     fcm_module.initialize_firebase(settings.FIREBASE_CREDENTIALS_JSON)
 
-    # Build FastAPI app
+    # Build FastAPI app (starts responding to /ping immediately)
     http_app = create_app(session_factory)
 
     # Build gRPC server
@@ -76,10 +72,21 @@ async def _start() -> None:
         log_level="info",
     )
     server = uvicorn.Server(config)
+
+    async def _init_db() -> None:
+        """Initialise DB schema after the HTTP server is already accepting."""
+        try:
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+            typer.secho("Database schema initialised.", fg=typer.colors.GREEN)
+        except Exception:
+            logging.exception("Failed to initialise database schema")
+
     try:
         async with asyncio.TaskGroup() as tg:
             tg.create_task(server.serve())
             tg.create_task(grpc_server.wait_for_termination())
+            tg.create_task(_init_db())
     finally:
         await grpc_server.stop(grace=5)
 
