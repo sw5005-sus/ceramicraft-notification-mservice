@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy to ArgoCD (manual)
 
 on:
   workflow_dispatch:
@@ -64,5 +64,5 @@ jobs:
           git config user.name "${GIT_AUTHOR_NAME}"
           git config user.email "${GIT_AUTHOR_EMAIL}"
           git add helm_backend/notification-ms/values.yaml
-          git commit -m "chore: bump notification-ms tag to ${{ github.event.inputs.version }} [skip ci]" || echo "No changes to commit"
+          git commit -m "chore(notification-ms): bump tag to ${{ github.event.inputs.version }} [skip ci]" || echo "No changes to commit"
           git push origin HEAD:main
