@@ -1,4 +1,4 @@
-from functools import lru_cache
+from functools import cache
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -29,6 +29,6 @@ class Settings(BaseSettings):
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.NOTIFICATION_DB_NAME}"
 
 
-@lru_cache
+@cache
 def get_settings() -> Settings:
     return Settings()
