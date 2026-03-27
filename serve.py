@@ -2,7 +2,6 @@ import asyncio
 import logging
 import sys
 
-import dotenv
 import dttb
 import grpc
 import typer
@@ -18,9 +17,6 @@ from ceramicraft_notification_mservice.service import NotificationService
 
 # Apply dttb tracebacks for timestamps on exceptions
 dttb.apply()
-
-# Load environment variables
-dotenv.load_dotenv()
 
 app = typer.Typer(help="CeramiCraft Notification Microservice CLI")
 
