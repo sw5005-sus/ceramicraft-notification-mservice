@@ -11,9 +11,6 @@ logger = logging.getLogger(__name__)
 
 _firebase_app: Optional[firebase_admin.App] = None
 
-# Generic placeholder shown in system tray — never put real content here
-_NOTIFICATION_BODY_PLACEHOLDER = "You have a new secure message. Tap to view details."
-
 
 def initialize_firebase(
     cred_env: str,
@@ -54,22 +51,22 @@ def initialize_firebase(
 
 async def send_push(
     fcm_token: str,
-    title: str,
     encrypted_body: str,
     extra_data: dict[str, str] | None = None,
 ) -> bool:
     """
-    Sends a push notification to a device using FCM.
+    Sends a data-only push notification to a device using FCM.
 
-    The notification block carries a plaintext title and a generic body
-    placeholder (so the OS can display a tray notification without exposing
-    sensitive content). The real body ciphertext is delivered in the data
-    block under the key ``encrypted_payload``, alongside any caller-supplied
-    extra fields.
+    No ``notification`` block is included — the OS will not display a
+    system tray notification automatically.  The app's JS/native layer
+    is responsible for decrypting the payload and creating a local
+    notification.
+
+    The encrypted body is delivered in the ``data`` block under the key
+    ``encrypted_payload``, alongside any caller-supplied extra fields.
 
     Args:
         fcm_token: The Firebase Cloud Messaging registration token.
-        title: Plaintext notification title shown in the system tray.
         encrypted_body: Base64-encoded AES-GCM ciphertext of the message body.
         extra_data: Optional extra key/value pairs forwarded to the app
                     (e.g. ``action_type``, ``order_id``).
@@ -86,10 +83,6 @@ async def send_push(
         data.update(extra_data)
 
     message = messaging.Message(
-        notification=messaging.Notification(
-            title=title,
-            body=_NOTIFICATION_BODY_PLACEHOLDER,
-        ),
         data=data,
         token=fcm_token,
         android=messaging.AndroidConfig(priority="high"),

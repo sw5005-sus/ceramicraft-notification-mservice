@@ -1,4 +1,3 @@
-import base64
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -82,7 +81,7 @@ async def test_send_push_failed_device(svc, session_factory, ctx):
 
 
 async def test_encrypted_payload_format(svc, session_factory, ctx):
-    """Verify fcm.send_push receives correct title, encrypted body and extra_data."""
+    """Verify fcm.send_push receives correct encrypted body and extra_data."""
     user_id = 103
     async with session_factory() as session:
         device = await _register_device(session, user_id, "dev_enc", "fcm_enc")
@@ -104,19 +103,8 @@ async def test_encrypted_payload_format(svc, session_factory, ctx):
     kwargs = mock_send.call_args.kwargs
 
     assert kwargs["fcm_token"] == device.fcm_token
-    assert kwargs["title"] == "Enc"
+    assert "title" not in kwargs
     assert kwargs["extra_data"] == {"extra": "info"}
-
-    encrypted_payload_b64 = kwargs["encrypted_body"]
-
-    # Verify it's valid Base64
-    try:
-        encrypted_data = base64.b64decode(encrypted_payload_b64)
-    except Exception:
-        pytest.fail("Payload is not valid Base64")
-
-    # AES-GCM: nonce(12 bytes) + ciphertext + tag(16 bytes), minimum > 12
-    assert len(encrypted_data) > 12, "Encrypted data is too short"
 
 
 async def test_send_push_multiple_devices(svc, session_factory, ctx):

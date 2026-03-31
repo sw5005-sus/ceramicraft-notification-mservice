@@ -43,7 +43,6 @@ class NotificationService(notification_pb2_grpc.NotificationServiceServicer):
                     enc_body = crypto.encrypt_payload(device.aes_key, request.body)
                     success = await fcm.send_push(
                         fcm_token=device.fcm_token,
-                        title=request.title,
                         encrypted_body=enc_body,
                         extra_data=extra_data or None,
                     )

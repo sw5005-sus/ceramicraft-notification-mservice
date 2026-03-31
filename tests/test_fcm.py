@@ -107,7 +107,7 @@ def test_initialize_firebase_exception_handled():
 
 async def test_send_push_returns_false_when_not_initialised():
     """send_push should return False when Firebase is not initialised."""
-    result = await send_push("token", "Title", "enc_body")
+    result = await send_push("token", "enc_body")
     assert result is False
 
 
@@ -119,7 +119,7 @@ async def test_send_push_success():
         f"{_FCM}.asyncio.to_thread",
         new=AsyncMock(return_value="message-id"),
     ):
-        result = await send_push("fcm_token", "Hello", "enc123", {"order_id": "42"})
+        result = await send_push("fcm_token", "enc123", {"order_id": "42"})
 
     assert result is True
 
@@ -132,7 +132,7 @@ async def test_send_push_unregistered_token():
         f"{_FCM}.asyncio.to_thread",
         new=AsyncMock(side_effect=messaging.UnregisteredError("unreg")),
     ):
-        result = await send_push("bad_token", "Title", "enc")
+        result = await send_push("bad_token", "enc")
 
     assert result is False
 
@@ -145,23 +145,23 @@ async def test_send_push_generic_exception():
         f"{_FCM}.asyncio.to_thread",
         new=AsyncMock(side_effect=Exception("network error")),
     ):
-        result = await send_push("token", "Title", "enc")
+        result = await send_push("token", "enc")
 
     assert result is False
 
 
 async def test_send_push_no_extra_data():
-    """send_push with no extra_data should still work."""
+    """send_push with no extra_data should only include encrypted_payload."""
     fcm_module._firebase_app = MagicMock()
 
     with patch(
         f"{_FCM}.asyncio.to_thread",
         new=AsyncMock(return_value="ok"),
     ) as mock_thread:
-        result = await send_push("token", "Title", "enc")
+        result = await send_push("token", "enc")
 
     assert result is True
     call_args = mock_thread.call_args
     built_message = call_args.args[1]  # to_thread(messaging.send, message)
     assert built_message.data == {"encrypted_payload": "enc"}
-    assert built_message.notification.title == "Title"
+    assert built_message.notification is None
