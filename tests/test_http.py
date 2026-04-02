@@ -9,6 +9,9 @@ from ceramicraft_notification_mservice.models.device_token import DeviceToken
 
 pytestmark = pytest.mark.asyncio
 
+# Header injected by the API Gateway (mirrors Go service behaviour)
+_AUTH_HEADERS = {"X-Original-User-ID": "123"}
+
 
 async def test_ping(http_client):
     """Test the ping endpoint."""
@@ -25,11 +28,8 @@ async def test_register_new_device(http_client, session_factory):
 
     response = await http_client.post(
         "/notification-ms/v1/push-token",
-        json={
-            "user_id": user_id,
-            "device_id": device_id,
-            "fcm_token": fcm_token,
-        },
+        json={"device_id": device_id, "fcm_token": fcm_token},
+        headers={"X-Original-User-ID": str(user_id)},
     )
 
     assert response.status_code == 200
@@ -55,15 +55,13 @@ async def test_register_same_device_gets_new_key(http_client, session_factory):
     """Test that reregistering the same device issues a new AES key."""
     user_id = 456
     device_id = str(uuid.uuid4())
+    headers = {"X-Original-User-ID": str(user_id)}
 
     # First registration
     response1 = await http_client.post(
         "/notification-ms/v1/push-token",
-        json={
-            "user_id": user_id,
-            "device_id": device_id,
-            "fcm_token": "token1",
-        },
+        json={"device_id": device_id, "fcm_token": "token1"},
+        headers=headers,
     )
     assert response1.status_code == 200
     key1 = response1.json()["aes_key"]
@@ -71,11 +69,8 @@ async def test_register_same_device_gets_new_key(http_client, session_factory):
     # Second registration with a new FCM token
     response2 = await http_client.post(
         "/notification-ms/v1/push-token",
-        json={
-            "user_id": user_id,
-            "device_id": device_id,
-            "fcm_token": "token2",
-        },
+        json={"device_id": device_id, "fcm_token": "token2"},
+        headers=headers,
     )
     assert response2.status_code == 200
     key2 = response2.json()["aes_key"]
@@ -97,25 +92,17 @@ async def test_register_different_devices_same_user(
     user_id = 789
     device_id1 = str(uuid.uuid4())
     device_id2 = str(uuid.uuid4())
+    headers = {"X-Original-User-ID": str(user_id)}
 
-    # Register first device
     await http_client.post(
         "/notification-ms/v1/push-token",
-        json={
-            "user_id": user_id,
-            "device_id": device_id1,
-            "fcm_token": "token_dev1",
-        },
+        json={"device_id": device_id1, "fcm_token": "token_dev1"},
+        headers=headers,
     )
-
-    # Register second device
     await http_client.post(
         "/notification-ms/v1/push-token",
-        json={
-            "user_id": user_id,
-            "device_id": device_id2,
-            "fcm_token": "token_dev2",
-        },
+        json={"device_id": device_id2, "fcm_token": "token_dev2"},
+        headers=headers,
     )
 
     # Verify both devices exist for the user
@@ -125,3 +112,32 @@ async def test_register_different_devices_same_user(
         devices = result.scalars().all()
         assert len(devices) == 2
         assert {d.device_id for d in devices} == {device_id1, device_id2}
+
+
+async def test_register_missing_header_returns_401(http_client):
+    """Test that missing X-Original-User-ID header returns 401."""
+    response = await http_client.post(
+        "/notification-ms/v1/push-token",
+        json={"device_id": "some-device", "fcm_token": "some-token"},
+    )
+    assert response.status_code == 401
+
+
+async def test_register_invalid_header_returns_401(http_client):
+    """Test that non-numeric X-Original-User-ID returns 401."""
+    response = await http_client.post(
+        "/notification-ms/v1/push-token",
+        json={"device_id": "some-device", "fcm_token": "some-token"},
+        headers={"X-Original-User-ID": "not-a-number"},
+    )
+    assert response.status_code == 401
+
+
+async def test_register_zero_user_id_returns_401(http_client):
+    """Test that user ID <= 0 returns 401."""
+    response = await http_client.post(
+        "/notification-ms/v1/push-token",
+        json={"device_id": "some-device", "fcm_token": "some-token"},
+        headers={"X-Original-User-ID": "0"},
+    )
+    assert response.status_code == 401

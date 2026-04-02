@@ -1,7 +1,7 @@
 from pathlib import Path
-from typing import AsyncGenerator
+from typing import Annotated, AsyncGenerator
 
-from fastapi import APIRouter, Depends, FastAPI, status
+from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, status
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -13,15 +13,40 @@ from ..models.device_token import DeviceToken
 
 _STATIC_DIR = Path(__file__).parent / "static"
 
+X_ORIGINAL_USER_ID = "X-Original-User-ID"
+
 
 class RegisterPushTokenRequest(BaseModel):
-    user_id: int
     device_id: str
     fcm_token: str
 
 
 class RegisterPushTokenResponse(BaseModel):
     aes_key: str  # Base64 encoded
+
+
+def _get_user_id(
+    x_original_user_id: Annotated[str | None, Header(alias="X-Original-User-ID")] = None,
+) -> int:
+    """Extract and validate user ID from the gateway-injected header."""
+    if not x_original_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing X-Original-User-ID header",
+        )
+    try:
+        user_id = int(x_original_user_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid X-Original-User-ID header",
+        )
+    if user_id <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid X-Original-User-ID header",
+        )
+    return user_id
 
 
 def create_router(
@@ -44,13 +69,14 @@ def create_router(
     )
     async def register_push_token(
         request: RegisterPushTokenRequest,
+        user_id: Annotated[int, Depends(_get_user_id)],
         session: AsyncSession = Depends(get_db_session),
     ) -> RegisterPushTokenResponse:
         new_key_bytes = crypto.generate_aes_key()
         new_key_hex = crypto.key_to_hex(new_key_bytes)
 
         stmt = insert(DeviceToken).values(
-            user_id=request.user_id,
+            user_id=user_id,
             device_id=request.device_id,
             fcm_token=request.fcm_token,
             aes_key=new_key_hex,
