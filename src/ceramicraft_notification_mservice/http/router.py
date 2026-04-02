@@ -13,8 +13,6 @@ from ..models.device_token import DeviceToken
 
 _STATIC_DIR = Path(__file__).parent / "static"
 
-X_ORIGINAL_USER_ID = "X-Original-User-ID"
-
 
 class RegisterPushTokenRequest(BaseModel):
     device_id: str
@@ -72,7 +70,7 @@ def create_router(
     async def register_push_token(
         request: RegisterPushTokenRequest,
         user_id: Annotated[int, Depends(_get_user_id)],
-        session: AsyncSession = Depends(get_db_session),
+        session: Annotated[AsyncSession, Depends(get_db_session)],
     ) -> RegisterPushTokenResponse:
         new_key_bytes = crypto.generate_aes_key()
         new_key_hex = crypto.key_to_hex(new_key_bytes)
