@@ -26,7 +26,9 @@ class RegisterPushTokenResponse(BaseModel):
 
 
 def _get_user_id(
-    x_original_user_id: Annotated[str | None, Header(alias="X-Original-User-ID")] = None,
+    x_original_user_id: Annotated[
+        str | None, Header(alias="X-Original-User-ID")
+    ] = None,
 ) -> int:
     """Extract and validate user ID from the gateway-injected header."""
     if not x_original_user_id:
