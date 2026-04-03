@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import sys
 
 import dttb
 import grpc
@@ -99,7 +98,6 @@ def start() -> None:
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        stream=sys.stdout,
     )
     asyncio.run(_start())
 
