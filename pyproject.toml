@@ -36,6 +36,7 @@ dev = [
 ]
 
 [tool.ruff]
+target-version = "py312"
 exclude = ["src/ceramicraft_notification_mservice/pb/"]
 
 [tool.ty.src]
