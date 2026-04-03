@@ -1,3 +1,4 @@
+import base64
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -105,6 +106,9 @@ async def test_encrypted_payload_format(svc, session_factory, ctx):
     assert kwargs["fcm_token"] == device.fcm_token
     assert "title" not in kwargs
     assert kwargs["extra_data"] == {"extra": "info"}
+
+    encrypted_data = base64.b64decode(kwargs["encrypted_body"])
+    assert len(encrypted_data) > 12
 
 
 async def test_send_push_multiple_devices(svc, session_factory, ctx):
