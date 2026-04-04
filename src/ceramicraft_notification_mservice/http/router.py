@@ -63,7 +63,7 @@ def create_router(
         return {"status": "ok"}
 
     @router.post(
-        "/push-token",
+        "/customer/push-token",
         status_code=status.HTTP_200_OK,
         response_model=RegisterPushTokenResponse,
     )

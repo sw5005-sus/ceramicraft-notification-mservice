@@ -27,7 +27,7 @@ async def test_register_new_device(http_client, session_factory):
     fcm_token = "test_fcm_token"
 
     response = await http_client.post(
-        "/notification-ms/v1/push-token",
+        "/notification-ms/v1/customer/push-token",
         json={"device_id": device_id, "fcm_token": fcm_token},
         headers={"X-Original-User-ID": str(user_id)},
     )
@@ -59,7 +59,7 @@ async def test_register_same_device_gets_new_key(http_client, session_factory):
 
     # First registration
     response1 = await http_client.post(
-        "/notification-ms/v1/push-token",
+        "/notification-ms/v1/customer/push-token",
         json={"device_id": device_id, "fcm_token": "token1"},
         headers=headers,
     )
@@ -68,7 +68,7 @@ async def test_register_same_device_gets_new_key(http_client, session_factory):
 
     # Second registration with a new FCM token
     response2 = await http_client.post(
-        "/notification-ms/v1/push-token",
+        "/notification-ms/v1/customer/push-token",
         json={"device_id": device_id, "fcm_token": "token2"},
         headers=headers,
     )
@@ -95,12 +95,12 @@ async def test_register_different_devices_same_user(
     headers = {"X-Original-User-ID": str(user_id)}
 
     await http_client.post(
-        "/notification-ms/v1/push-token",
+        "/notification-ms/v1/customer/push-token",
         json={"device_id": device_id1, "fcm_token": "token_dev1"},
         headers=headers,
     )
     await http_client.post(
-        "/notification-ms/v1/push-token",
+        "/notification-ms/v1/customer/push-token",
         json={"device_id": device_id2, "fcm_token": "token_dev2"},
         headers=headers,
     )
@@ -117,7 +117,7 @@ async def test_register_different_devices_same_user(
 async def test_register_missing_header_returns_401(http_client):
     """Test that missing X-Original-User-ID header returns 401."""
     response = await http_client.post(
-        "/notification-ms/v1/push-token",
+        "/notification-ms/v1/customer/push-token",
         json={"device_id": "some-device", "fcm_token": "some-token"},
     )
     assert response.status_code == 401
@@ -126,7 +126,7 @@ async def test_register_missing_header_returns_401(http_client):
 async def test_register_invalid_header_returns_401(http_client):
     """Test that non-numeric X-Original-User-ID returns 401."""
     response = await http_client.post(
-        "/notification-ms/v1/push-token",
+        "/notification-ms/v1/customer/push-token",
         json={"device_id": "some-device", "fcm_token": "some-token"},
         headers={"X-Original-User-ID": "not-a-number"},
     )
@@ -136,7 +136,7 @@ async def test_register_invalid_header_returns_401(http_client):
 async def test_register_zero_user_id_returns_401(http_client):
     """Test that user ID <= 0 returns 401."""
     response = await http_client.post(
-        "/notification-ms/v1/push-token",
+        "/notification-ms/v1/customer/push-token",
         json={"device_id": "some-device", "fcm_token": "some-token"},
         headers={"X-Original-User-ID": "0"},
     )

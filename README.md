@@ -33,7 +33,7 @@ All protected endpoints require the `X-Original-User-ID` header, injected by the
 
 Health check. Returns `{"status": "ok"}`.
 
-#### `POST /notification-ms/v1/push-token`
+#### `POST /notification-ms/v1/customer/push-token`
 
 Register or update a device's FCM push token. Each call rotates the AES key (key rotation on re-registration is intentional).
 
