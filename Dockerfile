@@ -12,4 +12,4 @@ RUN uv sync --frozen --no-dev
 
 EXPOSE 8080 50051
 
-CMD ["uv", "run", "python", "serve.py", "start"]
+CMD ["uv", "run", "--no-dev", "python", "serve.py", "start"]
