@@ -19,7 +19,7 @@ dependencies = [
     "fastapi>=0.111.0",
     "uvicorn>=0.30.1",
     "firebase-admin>=6.5.0",
-    "cryptography>=42.0.8",
+    "cryptography>=46.0.6",
     "pydantic-settings>=2.3.0",
 ]
 
@@ -46,3 +46,9 @@ exclude = ["src/ceramicraft_notification_mservice/pb/"]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
+
+[tool.uv]
+override-dependencies = [
+    "requests>=2.33.0",
+    "pygments>=2.20.0",
+]
