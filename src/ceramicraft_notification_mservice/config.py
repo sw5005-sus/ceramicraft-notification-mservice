@@ -9,9 +9,9 @@ class Settings(BaseSettings):
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )
 
-    POSTGRES_USER: str = Field(default="user")
-    POSTGRES_PASSWORD: str = Field(default="password")
-    POSTGRES_HOST: str = Field(default="localhost")
+    POSTGRES_USER: str = Field(default="")
+    POSTGRES_PASSWORD: str = Field(default="")
+    POSTGRES_HOST: str = Field(default="")
     POSTGRES_PORT: int = Field(default=5432)
     NOTIFICATION_DB_NAME: str = "notification_db"
 
