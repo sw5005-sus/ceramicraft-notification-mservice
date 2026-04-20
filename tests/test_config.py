@@ -22,6 +22,7 @@ def test_settings_defaults():
     assert settings.NOTIFICATION_MSERVICE_GRPC_HOST == "[::]"
     assert settings.NOTIFICATION_MSERVICE_GRPC_PORT == 50051
     assert settings.FIREBASE_CREDENTIALS_JSON == ""
+    assert settings.LOG_LEVEL == "INFO"
 
 
 def test_database_url_property():

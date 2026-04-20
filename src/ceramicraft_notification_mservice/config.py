@@ -22,6 +22,8 @@ class Settings(BaseSettings):
 
     FIREBASE_CREDENTIALS_JSON: str = Field(default="")
 
+    LOG_LEVEL: str = Field(default="INFO")
+
     @property
     def DATABASE_URL(
         self,

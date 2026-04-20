@@ -41,6 +41,16 @@ class NotificationService(notification_pb2_grpc.NotificationServiceServicer):
 
                 async def _send_and_track(device: DeviceToken) -> str | None:
                     enc_body = crypto.encrypt_payload(device.aes_key, request.body)
+                    logger.info(
+                        "Encrypted push | user_id=%s | device=%s | "
+                        "algo=AES-256-GCM | plaintext_preview=%.20s... | "
+                        "encrypted_len=%d | encrypted_preview=%.40s...",
+                        request.user_id,
+                        device.device_id,
+                        request.body,
+                        len(enc_body),
+                        enc_body,
+                    )
                     success = await fcm.send_push(
                         fcm_token=device.fcm_token,
                         encrypted_body=enc_body,

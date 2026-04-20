@@ -72,3 +72,13 @@ See [`protos/notification.proto`](protos/notification.proto).
 
 `SendUserPush` — sends an encrypted push notification to all registered devices of a user.
 
+## Configuration
+
+All settings are loaded from environment variables (or `.env` file). See [`.env.example`](.env.example) for the full list.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LOG_LEVEL` | `INFO` | Logging level. Set to `DEBUG` to include AES-GCM encryption details (plaintext/ciphertext lengths). |
+
+At `INFO` level, each push logs the algorithm used, a plaintext preview (first 20 chars), and an encrypted payload preview — enough to verify end-to-end encryption without exposing keys.
+
