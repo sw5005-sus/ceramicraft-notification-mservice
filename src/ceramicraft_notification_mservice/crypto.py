@@ -1,7 +1,10 @@
 import base64
+import logging
 import os
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+logger = logging.getLogger(__name__)
 
 
 def generate_aes_key() -> bytes:
@@ -49,6 +52,11 @@ def encrypt_payload(
     nonce = os.urandom(12)  # GCM standard nonce size
     payload_bytes = payload.encode("utf-8")
     ciphertext_with_tag = aesgcm.encrypt(nonce, payload_bytes, None)
+    logger.debug(
+        "AES-256-GCM encrypt | plaintext_len=%d | ciphertext_len=%d",
+        len(payload_bytes),
+        len(ciphertext_with_tag),
+    )
     # Prepend the nonce to the ciphertext for decryption
     encrypted_data = nonce + ciphertext_with_tag
     return base64.b64encode(encrypted_data).decode("utf-8")

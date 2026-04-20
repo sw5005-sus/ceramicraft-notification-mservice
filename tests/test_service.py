@@ -1,4 +1,5 @@
 import base64
+import logging
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -156,3 +157,30 @@ async def test_send_push_no_extra_data(svc, session_factory, ctx):
 
     kwargs = mock_send.call_args.kwargs
     assert kwargs["extra_data"] is None
+
+
+async def test_send_push_logs_encryption(svc, session_factory, ctx, caplog):
+    """Verify that encryption details are logged at INFO level."""
+    user_id = 106
+    async with session_factory() as session:
+        await _register_device(session, user_id, "dev_log", "fcm_log")
+
+    request = notification_pb2.SendUserPushRequest(
+        user_id=user_id, title="Log", body="Secret message content"
+    )
+    mock_send = AsyncMock(return_value=True)
+    with (
+        patch(
+            "ceramicraft_notification_mservice.service.fcm.send_push",
+            new=mock_send,
+        ),
+        caplog.at_level(logging.INFO),
+    ):
+        await svc.SendUserPush(request, ctx)
+
+    encryption_logs = [r for r in caplog.records if "Encrypted push" in r.message]
+    assert len(encryption_logs) == 1
+    log_msg = encryption_logs[0].message
+    assert "AES-256-GCM" in log_msg
+    assert "Secret message con" in log_msg  # first 20 chars preview
+    assert "encrypted_len=" in log_msg

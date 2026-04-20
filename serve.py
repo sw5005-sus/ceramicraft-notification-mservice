@@ -95,8 +95,9 @@ def reset_db() -> None:
 @app.command()
 def start() -> None:
     """Start the HTTP and gRPC servers."""
+    settings = get_settings()
     logging.basicConfig(
-        level=logging.INFO,
+        level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
     asyncio.run(_start())
